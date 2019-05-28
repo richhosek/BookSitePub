@@ -1,10 +1,11 @@
 # BookSitePub
-Author Publishing
+Independent Author Book Promotion sites
 
 Unauthenticated landing page:
 - BookSite - Discover, Read, Share, Free Books
 - Reader Services
 - Author Services
+- Deals
 
 Authenticated Reader Page:
 - news feed
@@ -28,3 +29,7 @@ Author
 - books
 - series
 - (favorite authors)
+
+Series
+- name
+- Description
