@@ -121,7 +121,8 @@ namespace BookSite.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
+                //! setting EmailConfirmed = true to bypass registration requirements
+                var user = new IdentityUser { UserName = Input.Email, Email = Input.Email, EmailConfirmed = true };
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
                 {

@@ -12,6 +12,8 @@ using BookSite.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using BookSite.Models;
 
 namespace BookSite
 {
@@ -30,7 +32,7 @@ namespace BookSite
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => {
+            services.AddIdentity<IdentityUser, IdentityRole>(options => {
                 options.SignIn.RequireConfirmedAccount = true;
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;
@@ -38,8 +40,12 @@ namespace BookSite
                 options.Password.RequireDigit = false;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequiredLength = 6;
+                options.SignIn.RequireConfirmedEmail = false;
+                options.SignIn.RequireConfirmedAccount = false;
             })
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
             services.AddRazorPages();
             services.AddAuthentication()
                 .AddGoogle(options =>
@@ -50,6 +56,13 @@ namespace BookSite
                     options.ClientId = googleAuthNSection["ClientId"];
                     options.ClientSecret = googleAuthNSection["ClientSecret"];
                 });
+            services.AddMvc(options =>
+            {
+                options.EnableEndpointRouting = false;
+            });
+            services.AddControllersWithViews().AddRazorRuntimeCompilation();
+            services.AddControllers();
+            services.AddSingleton<IEmailSender, SendGridMailSender>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -69,12 +82,12 @@ namespace BookSite
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
-            app.UseRouting();
-
             app.UseAuthentication();
+            app.UseRouting();
             app.UseAuthorization();
+            app.UseMvc();
 
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();

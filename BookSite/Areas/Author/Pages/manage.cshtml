@@ -1,0 +1,98 @@
+﻿@page
+@model BookSite.Areas.Author.Pages.manageModel
+@{
+}
+<div id="author-manage-app">
+    <h2>Author Management</h2>
+    <a href="/author/newprofile">Create an Author Profile</a>
+    <div v-if="authors.length" v-for="author in authors">
+        {{author.penName}}
+    </div>
+
+    <a href="/mybooks/newbook">Add a Book</a>
+    <h3>Books</h3>
+    <div v-for="book in books.filter(function(book) {return !book.series})">
+        <book :book="book" />
+    </div>
+    <div v-for="seriesName in series">
+        <h4>{{seriesName}}</h4>
+        <book v-for="book in books.filter(function(book) {return book.series === seriesName})" :book="book"/>
+        @*<div v-for="book in books.filter(function(book) {return book.series === seriesName})">
+            <h5>{{book.title}}</h5><h6 v-if="book.subtitle">{{book.subtitle}}</h6> by {{authorList(book.authors)}}
+        </div>*@
+    </div>
+</div>
+<script type="text/x-template" id="book-template">
+    <div>
+        <h5>{{book.title}}</h5><h6 v-if="book.subtitle">{{book.subtitle}}</h6> by {{authorList(book.authors)}}
+    </div>
+</script>
+
+@section Scripts{
+    <script src="~/lib/axios/axios.min.js"></script>
+    <script src="~/js/app/authorManager.js"></script>
+    <script src="~/js/app/bookManager.js"></script>
+    <script>
+        Vue.component("book", {
+            data: function () {
+                return {
+
+                }
+            },
+            template: "#book-template",
+            props: ["book"],
+            methods: {
+                authorList(authors) {
+                    return authors.reduce(function (authorList, bookAuthor, index, authorsArray) {
+                        if (index === 0) {
+                            return bookAuthor.author.penName;
+                        } else if (index === authorsArray.length - 1) {
+                            return `${authorList} and ${bookAuthor.author.penName}`;
+                        } else {
+                            return `${authorList}, ${bookAuthor.author.penName}`;
+                        }
+                    }, "");
+                }
+            }
+        }
+        );
+    </script>
+
+    <script>
+        const authorManageApp = new Vue({
+            el: "#author-manage-app",
+            data: {
+                authors: [],
+                books: [],
+                series: []
+            },
+            methods: {
+                
+            },
+            mounted() {
+                let self = this;
+                authorManager.getMyAuthors()
+                    .then(function (response) {
+                        self.authors = response.data;
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                    });
+                bookManager.getMyBooks()
+                    .then(function (response) {
+                        self.books = response.data;
+                        self.series = self.books.reduce(function (seriesList, book) {
+                            if (book.series && !seriesList.includes(book.series)) {
+                                seriesList.push(book.series);
+                            }
+                            return seriesList
+                        }, [])
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                    });
+            }
+        });
+    </script>
+}
+

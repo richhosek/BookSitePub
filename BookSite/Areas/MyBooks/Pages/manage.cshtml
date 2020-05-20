@@ -1,0 +1,137 @@
+﻿@page
+@model BookSite.Areas.MyBooks.Pages.manageModel
+@{
+}
+<style>
+    .book-title{
+        text-decoration: underline;
+        cursor: pointer;
+    }
+</style>
+<div id="book-manage-app">
+    <h2 class="display-4 text-right">Book Management</h2>
+    <a class="btn btn-outline-primary" href="/mybooks/newbook">Add a Book</a>
+    <h3>Books</h3>
+    <table class="w-100 table table-striped">
+        <thead class="thead-dark text-light">
+            <tr class="bg-dark">
+                <td scope="col">Title</td>
+                <td scope="col">Author(s)</td>
+                <td scope="col">Active</td>
+                <td scope="col">Published On</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="book in books.filter(function(book) {return !book.series})">
+                <td class="book-title text-primary"><img class="mr-2" :src="`/api/books/coverart/${book.id}`" style="height:50px;" alt="" /><a :href="'/mybooks/details/' + book.id"><strong>{{book.title}}</strong> {{book.subtitle ? ` - ${book.subtitle}` : ""}}</a></td>
+                <td>{{authorList(book.authors)}}</td>
+                <td>{{book.isActive ? "yes" : "no"}}</td>
+                <td>{{book.publishedOn ? book.publishedOn : "no date set"}}</td>
+            </tr>
+        </tbody>
+        <tbody  v-for="seriesName in series">
+            <tr class="table-dark">
+                <td colspan="4" class="text-capitalize text-dark font-weight-bold">{{seriesName}}</td>
+            </tr>
+            <tr  v-for="book in books.filter(function(book) {return book.series === seriesName})">
+                <td class=" book-title text-primary"><img class="mr-2" :src="`/api/books/coverart/${book.id}`" style="height:50px;" alt="" /><a :href="'/mybooks/details/' + book.id">
+    
+                    <strong>{{book.title}}</strong> {{book.subtitle ? ` - ${book.subtitle}` : ""}}
+</a></td>
+                <td>{{authorList(book.authors)}}</td>
+                <td>{{book.isActive ? "yes" : "no"}}</td>
+                <td>{{book.publishedOn ? book.publishedOn : "no date set"}}</td>
+            </tr>
+        </tbody>
+
+    </table>
+
+
+</div>
+<script type="text/x-template" id="book-template">
+    <div>
+        <h5>{{book.title}}</h5><h6 v-if="book.subtitle">{{book.subtitle}}</h6> by {{authorList(book.authors)}}
+    </div>
+</script>
+
+@section Scripts{
+    <script src="~/lib/axios/axios.min.js"></script>
+    <script src="~/js/app/authorManager.js"></script>
+    <script src="~/js/app/bookManager.js"></script>
+    <script>
+        Vue.component("book", {
+            data: function () {
+                return {
+
+                }
+            },
+            template: "#book-template",
+            props: ["book"],
+            methods: {
+                authorList(authors) {
+                    return authors.reduce(function (authorList, bookAuthor, index, authorsArray) {
+                        if (index === 0) {
+                            return bookAuthor.author.penName;
+                        } else if (index === authorsArray.length - 1) {
+                            return `${authorList} and ${bookAuthor.author.penName}`;
+                        } else {
+                            return `${authorList}, ${bookAuthor.author.penName}`;
+                        }
+                    }, "");
+                }
+            }
+        }
+        );
+    </script>
+
+    <script>
+        const bookManageApp = new Vue({
+            el: "#book-manage-app",
+            data: {
+                authors: [],
+                books: [],
+                series: []
+            },
+            methods: {
+                authorList(authors) {
+                    return authors.reduce(function (authorList, bookAuthor, index, authorsArray) {
+                        if (index === 0) {
+                            return bookAuthor.author.penName;
+                        } else if (index === authorsArray.length - 1) {
+                            return `${authorList} and ${bookAuthor.author.penName}`;
+                        } else {
+                            return `${authorList}, ${bookAuthor.author.penName}`;
+                        }
+                    }, "");
+                },
+                openBookDetails(bookId) {
+                    console.log(`Opening Book: ${bookId}`);
+                }
+            },
+            mounted() {
+                let self = this;
+                authorManager.getMyAuthors()
+                    .then(function (response) {
+                        self.authors = response.data;
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                    });
+                bookManager.getMyBooks()
+                    .then(function (response) {
+                        self.books = response.data;
+                        self.series = self.books.reduce(function (seriesList, book) {
+                            if (book.series && !seriesList.includes(book.series)) {
+                                seriesList.push(book.series);
+                            }
+                            return seriesList
+                        }, [])
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                    });
+            }
+        });
+    </script>
+}
+

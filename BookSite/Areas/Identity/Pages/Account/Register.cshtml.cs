@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using BookSite.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -21,19 +22,25 @@ namespace BookSite.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly ApplicationDbContext _context;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
+            RoleManager<IdentityRole> roleManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _logger = logger;
             _emailSender = emailSender;
+            _context = context;
         }
 
         [BindProperty]
@@ -45,6 +52,15 @@ namespace BookSite.Areas.Identity.Pages.Account
 
         public class InputModel
         {
+            [Required]
+            [Display(Name = "Account Name (your name or business name)")]
+            public string AccountName { get; set; }
+
+            [Required]
+            [Display(Name = "Account Type")]
+            public string AccountType { get; set; }
+
+
             [Required]
             [EmailAddress]
             [Display(Name = "Email")]
@@ -80,6 +96,27 @@ namespace BookSite.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
+                    // Create BookSiteAccount
+                    _context.Accounts.Add(new Models.BookSiteAccount
+                    {
+                        Name = Input.AccountName,
+                        Type = Input.AccountType,
+                        User = user
+                    });
+                    await _context.SaveChangesAsync();
+
+                    IdentityRole role = _roleManager.Roles.FirstOrDefault(r => r.Name == Input.AccountType);
+                    if (role == null)
+                    {
+                        var roleResult = await _roleManager.CreateAsync(new IdentityRole
+                        {
+                            Name = Input.AccountType,
+                            NormalizedName = Input.AccountType
+                        });
+                        role = _roleManager.Roles.FirstOrDefault(r => r.Name == Input.AccountType);
+                    }
+                    await _userManager.AddToRoleAsync(user, Input.AccountType);
+                    
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                     var callbackUrl = Url.Page(

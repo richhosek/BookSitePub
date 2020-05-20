@@ -26,13 +26,18 @@ namespace BookSite.Data
                 .OnDelete(DeleteBehavior.Restrict);
         }
 
+        public DbSet<BookSiteAccount> Accounts { get; set; }
         public DbSet<Author> Authors { get; set; }
         public DbSet<Book> Books { get; set; }
+        public DbSet<CoverArt> Covers { get; set; }
+        public DbSet<CoverImage> Images { get; set; }
         public DbSet<BookAuthor> BookAuthors { get; set; }
         public DbSet<Collaborator> Collaborators { get; set; }
         public DbSet<Edition> Editions { get; set; }
         public DbSet<Format> Formats { get; set; }
         public DbSet<Listing> Listings { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
+        public DbSet<Section> Sections { get; set; }
+        public DbSet<Blurb> Blurbs { get; set; }
     }
 }

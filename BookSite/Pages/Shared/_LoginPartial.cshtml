@@ -1,12 +1,28 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
+@inject ApplicationDbContext Context
 
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
-    <li class="nav-item">
-        <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity.Name!</a>
+    <li class="nav-item dropdown">
+        @*<a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity.Name!</a>*@
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Account
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">@User.Identity.Name!</a>
+            @if (User.IsInRole("writer"))
+            {
+            <a class="dropdown-item" href="/author/manage">Author Mananger</a>
+            <a class="dropdown-item" href="/mybooks/manage">Book Mananger</a>
+            }
+            else
+            {
+            <a class="dropdown-item" href="/author/start">I'm an Author</a>
+            }
+        </div>
     </li>
     <li class="nav-item">
         <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post" >

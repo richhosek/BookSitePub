@@ -7,6 +7,7 @@
     <title>@ViewData["Title"] - BookSite</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+    @RenderSection("Styles", required: false)
 </head>
 <body>
     <header>
@@ -45,6 +46,7 @@
     <script src="https://apis.google.com/js/platform.js" async defer></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/vue/vue.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @RenderSection("Scripts", required: false)

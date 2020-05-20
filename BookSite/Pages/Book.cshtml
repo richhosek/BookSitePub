@@ -1,0 +1,318 @@
+﻿@page "/{penNameUrl}/{titleUrl?}"
+@model BookSite.BookModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@Model.Book.Title</title>
+    <link href="~/css/book.css" rel="stylesheet" />
+    <style>
+        .book3d > div {
+            position: absolute;
+        }
+
+        #floatingBook {
+            position: fixed;
+        }
+
+        .book3d {
+            /*box-shadow: darkgray 0 10px 20px;*/
+        }
+    </style>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=scrollIntoView"></script>
+</head> 
+<body>
+    
+    <div id="book-app">
+        <nav>
+            <div class="title">
+                <span v-on:click="scrollTo('#main')">@Model.Book.Title</span>
+                @*<br />
+                        <input :style="`width: 100%; margin-top: 40px;`" type="range" min="30" max="390" value="" v-model="yRotation" />
+                        <input :style="`width: 100%; margin-top: 10px;`" type="range" min="-30" max="30" value="" v-model="xRotation" />
+                        <input :style="`width: 100%; margin-top: 10px;`" type="range" min="0" max="360" value="" v-model="zRotation" />*@
+                    </div>
+            <div id="section-nav">
+                @foreach (var sec in Model.Book.Sections.Where(s => s.NavId != "main"))
+                {
+                    <span v-on:click="scrollTo('#@sec.NavId.Replace(" ", "")')">@sec.Name</span>
+                }
+                <span v-on:click="scrollTo('#blurbs')">Blurbs</span>
+                <span v-on:click="scrollTo('#more')">More</span>
+            </div>
+        </nav>
+        <div id="floatingBook" :style="`height: ${heightInPixels}
+    px; top: ${bookTopMargin}px;left:${
+    bookLeftMargin}px`">
+            <div :style="bookContainerStyle(cover)">
+                <div class="book3d" :style="book3dStyle(cover)">
+                    <div class="front" :style="book3dCoverStyle(cover)"></div>
+                    <div class="back" :style="book3dBackStyle(cover)"></div>
+                    <div :style="book3dEdgeStyle(cover)"></div>
+                    <div :style="book3dSpineStyle(cover)"></div>
+                    <div :style="book3dTopStyle(cover)"></div>
+                    <div :style="book3dBottomStyle(cover)"></div>
+                </div>
+            </div>
+        </div>
+        @foreach(var sec in Model.Book.Sections.OrderBy(s => s.Order))
+        {
+            <section id="@sec.NavId.Replace(" ", "")" style="background-color: @sec.BackgroundColor; text-align: left; background-image: url(/api/books/sectionbackground/@sec.Id); background-size: cover; color: @sec.Color; text-shadow: -.1vmax .1vmax .2vmax @sec.BackgroundColor;">
+                <div class="content">@Html.Raw(sec.Content)</div>
+            </section>
+        }
+        @*<section id="main" style="background-color: darkgray; text-align: right">
+            <div class="content">
+                <h2>Raney and Daye</h2><p><strong>Near Death</strong>&nbsp;introduces us to parapsychologist and anthropology professor Dr. Jennifer Daye and police detective Nate Raney in a story of murder, ghosts, a near-death experience.<br data-mce-bogus="1"></p><p>When Nate is shot during a high-stakes robbery, he awakes from the ordeal during which he was clinically dead with the information he needs to track down the men who shot him. However, he remains skeptical that there was anything supernatural about his experience.</p><p>Jennifer thinks otherwise and tries to convince Nate to share his experience. They team up to investigate a case involving a woman with an uninvited apparition in her apartment that leads them to uncover and solve a decades-old mystery.</p><p><strong>Near Death</strong> is a fast-paced story that takes you on an exciting journey through the paranormal.</p>
+            </div>
+        </section>*@
+        <section id="blurbs" style="background-color: lightcoral; text-align: right">
+            <div class="content">
+                <h3>BACON</h3>
+                <p>Bacon ipsum dolor amet sausage kielbasa beef pork belly spare ribs chislic pig bacon turkey. Prosciutto ham hock tri-tip, drumstick picanha t-bone turkey chuck ground round chicken corned beef andouille short loin alcatra. Spare ribs meatball beef ribs, chuck pancetta kielbasa venison landjaeger cupim biltong kevin turkey ham tail chislic. Pastrami t-bone drumstick shank, chislic tail landjaeger prosciutto.</p>
+
+                <p style="font-size: 1.25em">Shoulder shankle doner bacon t-bone. Brisket ball tip shoulder rump pancetta meatball tri-tip ribeye tenderloin flank biltong tail cupim. Cow frankfurter beef ribs sirloin kevin flank pig pastrami. Rump chicken shankle fatback ham frankfurter corned beef meatball drumstick pork chop alcatra tongue kielbasa porchetta.</p>
+            </div>
+        </section>
+        <section id="more" style="background-color: darkgray; text-align: right">
+            <div class="content">
+                <h3>BACON</h3>
+                <p>Bacon ipsum dolor amet sausage kielbasa beef pork belly spare ribs chislic pig bacon turkey. Prosciutto ham hock tri-tip, drumstick picanha t-bone turkey chuck ground round chicken corned beef andouille short loin alcatra. Spare ribs meatball beef ribs, chuck pancetta kielbasa venison landjaeger cupim biltong kevin turkey ham tail chislic. Pastrami t-bone drumstick shank, chislic tail landjaeger prosciutto.</p>
+
+                <p style="font-size: 1.25em">Shoulder shankle doner bacon t-bone. Brisket ball tip shoulder rump pancetta meatball tri-tip ribeye tenderloin flank biltong tail cupim. Cow frankfurter beef ribs sirloin kevin flank pig pastrami. Rump chicken shankle fatback ham frankfurter corned beef meatball drumstick pork chop alcatra tongue kielbasa porchetta.</p>
+            </div>
+        </section>
+        <section style="background-color: lightcoral; text-align: right">
+            <div class="content">
+                <h3>BACON</h3>
+                <p>Bacon ipsum dolor amet sausage kielbasa beef pork belly spare ribs chislic pig bacon turkey. Prosciutto ham hock tri-tip, drumstick picanha t-bone turkey chuck ground round chicken corned beef andouille short loin alcatra. Spare ribs meatball beef ribs, chuck pancetta kielbasa venison landjaeger cupim biltong kevin turkey ham tail chislic. Pastrami t-bone drumstick shank, chislic tail landjaeger prosciutto.</p>
+
+                <p style="font-size: 1.25em">Shoulder shankle doner bacon t-bone. Brisket ball tip shoulder rump pancetta meatball tri-tip ribeye tenderloin flank biltong tail cupim. Cow frankfurter beef ribs sirloin kevin flank pig pastrami. Rump chicken shankle fatback ham frankfurter corned beef meatball drumstick pork chop alcatra tongue kielbasa porchetta.</p>
+            </div>
+        </section>
+        
+    </div>
+
+    
+    <script src="~/lib/vue/vue.js"></script>
+    <script>
+
+        const bookApp = new Vue({
+            el: "#book-app",
+            data: {
+                bookId: @Model.Book.Id,
+                @{ var cover = Model.Book.Covers.SingleOrDefault(c => c.Type == Models.CoverType.Full); }
+                cover: {
+                    width: @cover.Width,
+                    height: @cover.Height,
+                    spineWidth:@cover.SpineWidth
+                },
+                heightInPixels: 900,
+                yRotation: 30,
+                //xRotation: -30,
+                zRotation: 0,
+                scrollY: 0,
+                viewPortHeight: 0,
+                bookLeftMargin: 0,
+                bookTopMargin: 0,
+                displayMode: "desktop"
+            },
+            created() {
+                console.log("Add Scroll Event")
+                window.addEventListener('scroll', this.scrolled.bind(this));
+                window.addEventListener('resize', this.resize.bind(this));
+            },
+            destroyed() {
+                console.log("Remove Scroll Event")
+                window.removeEventListener('scroll', this.scrolled);
+                window.removeEventListener('resize', this.resize);
+            },
+            mounted() {
+                this.resize();
+            },
+            computed: {
+                xRotation() {
+                    if (window.scrollY <= this.viewPortHeight) {
+                        return 30 - (this.yRotation / 2 - 15);
+                    }
+                    if (window.scrollY > this.viewPortHeight && window.scrollY <= this.viewPortHeight * 2) {
+                        return ((this.yRotation - 150) / 6) - 30;
+                    }
+                    if (window.scrollY > this.viewPortHeight * 2) {
+                        return 0;
+                    }
+                }
+
+            },
+            methods: {
+                scrollTo(selector) {
+                    document.querySelector(selector).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                },
+                resize() {
+                    this.viewPortHeight = window.innerHeight;
+                    let widthInPixels;
+                    let maxHeight = window.innerHeight - 50;
+                    if (this.viewPortHeight <= window.innerWidth || window.innerWidth > 575) {
+                        let bookHeight = this.viewPortHeight * .8;
+                        this.heightInPixels = bookHeight > 900 ? 900 : bookHeight;
+                        widthInPixels = (this.cover.width * ((100 - this.cover.spineWidth) / 200)) * (this.heightInPixels / this.cover.height);
+                        let ratio = this.heightInPixels / widthInPixels;
+                        if (widthInPixels > window.innerWidth * .8 / 2) {
+                            console.log("TOO WIDE")
+                            widthInPixels = window.innerWidth * .8 / 2;
+                            this.heightInPixels = widthInPixels * ratio;
+                        }
+                        this.bookLeftMargin = ((window.innerWidth / 2) - widthInPixels) / 2;
+                        this.bookTopMargin = (window.innerHeight - this.heightInPixels) / 2;
+                        this.displayMode = "desktop";
+                        
+                    } else {
+                        // phone mode
+                        this.heightInPixels = (this.viewPortHeight / 2) * .8;
+                        widthInPixels = (this.cover.width * ((100 - this.cover.spineWidth) / 200)) * (this.heightInPixels / this.cover.height);
+                        this.bookLeftMargin = (window.innerWidth - widthInPixels) / 2;
+                        this.bookTopMargin = 50;
+                        this.displayMode = "phone";
+                        maxHeight = window.innerHeight / 2;
+                    }
+                    console.log("VIEWPORT", window.innerWidth, window.innerHeight)
+                    console.log("BOOK", widthInPixels, this.heightInPixels)
+
+                    // Check size of 
+                    let sections = document.querySelectorAll("section");
+                    console.log(sections)
+                    for (let i = 0; i < sections.length; i++) {
+                        let content = sections[i].querySelector(".content"); 
+                        if (content) {
+                            let currentRemSize = 1;
+                            content.style["font-size"] = currentRemSize + "rem";
+                            console.log(window.innerHeight, content.innerHeight, content.clientHeight)
+                            while (content.clientHeight > maxHeight) {
+                                console.log("TOO TALL")
+                                currentRemSize = currentRemSize * .9;
+                                content.style["font-size"] = currentRemSize + "rem";
+                            }
+                            while (content.clientHeight < maxHeight / 2) {
+                                console.log("TOO short")
+                                currentRemSize = currentRemSize * 1.1;
+                                content.style["font-size"] = currentRemSize + "rem";
+                            }
+                            if (window.innerWidth / window.innerHeight < 1.4 && this.displayMode == "desktop") {
+                                let paddingAdujst = (1.5 - (window.innerWidth / window.innerHeight)) * 50 / 5;
+                                if (paddingAdujst > 5) { paddingAdujst = 5; }
+                                console.log("Padding Adjust", paddingAdujst);
+                                content.style["padding-right"] = 10 - paddingAdujst + "vw";
+                                content.style["padding-left"] = paddingAdujst + "vw";
+                            } else {
+                                content.style["padding-right"] = null;
+                                content.style["padding-left"] = null;
+                            }
+                        }
+                    }
+                },
+                scrolled() {
+                    let yRotation = 30;
+                    console.log("SCROLLING", window.scrollY, this.viewPortHeight);
+                    this.scrollY = window.scrollY;
+                    if (window.scrollY <= this.viewPortHeight) {
+                        yRotation = 30 + (window.scrollY * 120 / this.viewPortHeight);
+                        this.yRotation = yRotation;
+                    }
+                    if (window.scrollY > this.viewPortHeight && window.scrollY <= this.viewPortHeight * 2) {
+                        //yRotation = 150 - (30 + (window.scrollY * 120 / this.viewPortHeight) - 150);
+                        yRotation = 150 + (((window.scrollY - this.viewPortHeight) / this.viewPortHeight) * 180);
+                        this.yRotation = yRotation;
+                    }
+                    if (window.scrollY > this.viewPortHeight * 2) {
+                        yRotation = 330;
+                    }
+                    
+                    
+
+                },
+                sizes(cover, heightInPixels) {
+                    let height = heightInPixels;
+                    let width = (cover.width * ((100 - cover.spineWidth) / 200)) * (heightInPixels / cover.height); // 
+                    let spine = (cover.width * cover.spineWidth / 100) * (heightInPixels / cover.height);
+                    return {
+                        height,
+                        width,
+                        spine
+                    }
+                },
+                bookContainerStyle(cover) {
+                    let sizes = this.sizes(cover, this.heightInPixels)
+                    return `width: ${sizes.width}px;
+                    height: ${sizes.height}px;
+                    perspective: ${sizes.height * 2}px;
+                    margin: 0 auto;
+                    position:relative;`;
+                },
+                book3dStyle(cover) {
+                    let sizes = this.sizes(cover, this.heightInPixels)
+                    return `width: 100%;
+                    height: 100%;
+                    position: relative;
+                    transform-style: preserve-3d;
+                    transform: translateZ(0) rotateY(${this.yRotation}deg) rotateX(${this.xRotation}deg) rotateZ(${this.zRotation}deg);`
+                },
+                book3dCoverStyle(cover) {
+                    let sizes = this.sizes(cover, this.heightInPixels)
+                    return `width: 100%; height: 100%;
+                    background-image: url('/api/books/coverart/${this.bookId}/2?t=0');
+                    background-size:cover;
+                    background-position: right;
+                    transform: rotateY(0deg) translateZ(${sizes.spine / 2}px);${this.yRotation >=90 ? '_box-shadow: black 0 10vmin 20vmin' : ''}`
+                },
+                book3dBackStyle(cover) {
+                    let sizes = this.sizes(cover, this.heightInPixels)
+                    return `width: 100%; height: 100%;
+                    background-image: url('/api/books/coverart/${this.bookId}/2?t=0');
+                    background-size:cover;
+                    background-position: left;
+                    transform: rotateY(180deg) translateZ(${sizes.spine / 2}px);${this.yRotation < 90 ? '_box-shadow: black 0 10vmin 20vmin' : ''}`;
+                },
+                book3dSpineStyle(cover) {
+                    let sizes = this.sizes(cover, this.heightInPixels)
+                    return `width: ${sizes.spine}px;
+                    height: 100%;
+                    background-image: url('/api/books/coverart/${this.bookId}/2?t=0');
+                    background-size:cover;
+                    background-position:center;
+                    transform: rotateY(-90deg) translateZ(${sizes.spine / 2}px);`;
+                },
+                book3dEdgeStyle(cover) {
+                    let sizes = this.sizes(cover, this.heightInPixels)
+                    return `width: ${sizes.spine}px;
+                    height: 100%;
+                    background: whitesmoke;
+                    transform: rotateY(90deg) translateZ(${sizes.width - sizes.spine / 2}px);
+                    _box-shadow: black 0 10vmin 20vmin;`;
+                },
+                book3dTopStyle(cover) {
+                    let sizes = this.sizes(cover, this.heightInPixels)
+                    return `width: 100%;
+                    height: ${sizes.spine}px;
+                    background: whitesmoke;
+                    transform: rotateX(90deg) translateZ(${sizes.spine / 2}px);`;
+                },
+                book3dBottomStyle(cover) {
+                    let sizes = this.sizes(cover, this.heightInPixels)
+                    return `width: 100%;
+                    height: ${sizes.spine}px;
+                    background: whitesmoke;
+                    transform: rotateX(-90deg) translateZ(${sizes.height - sizes.spine / 2}px);`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

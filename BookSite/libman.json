@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "vue@2.6.10",
+      "destination": "wwwroot/lib/vue"
+    },
+    {
+      "library": "axios@0.19.0",
+      "destination": "wwwroot/lib/axios"
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "tinymce-vue@1.0.0",
+      "destination": "wwwroot/lib/tinymce-vue"
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "tinymce@5.2.2",
+      "destination": "wwwroot/lib/tinymce"
+    },
+    {
+      "provider": "unpkg",
+      "library": "sortablejs@1.10.2",
+      "destination": "wwwroot/lib/sortablejs"
+    }
+  ]
+}

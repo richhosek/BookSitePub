@@ -19,7 +19,7 @@ namespace BookSite.Pages
 
         public void OnGet()
         {
-
+            var user = User;
         }
     }
 }

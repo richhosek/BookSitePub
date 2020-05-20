@@ -1,0 +1,49 @@
+const path = require('path');
+const webpack = require('webpack');
+var options = require('./base.js');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+
+options.module.rules.shift();
+options.module.rules.unshift({
+    test: /\.vue$/,
+    loader: 'vue-loader',
+    options: {
+        loaders: {
+            'js': 'babel-loader',
+            'css': ExtractTextPlugin.extract({
+                use: 'css-loader',
+                fallback: 'vue-style-loader'
+            }),
+            'scss': ExtractTextPlugin.extract({
+                use: 'css-loader!sass-loader',
+                fallback: 'vue-style-loader'
+            })
+        }
+    }
+})
+options.module.rules.push({
+    test: /\.css$/,
+    use: ExtractTextPlugin.extract({
+        fallback: "style-loader",
+        use: "css-loader"
+    })
+});
+
+options.plugins = [
+    new ExtractTextPlugin('tinymce-vue.css'),
+    new webpack.DefinePlugin({
+        'process.env': {
+            NODE_ENV: '"production"'
+        }
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+        sourceMap: false,
+        compress: {
+            warnings: false
+        }
+    }),
+    new webpack.LoaderOptionsPlugin({
+        minimize: true
+    })
+];
+module.exports = options;

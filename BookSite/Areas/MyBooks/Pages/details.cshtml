@@ -1,0 +1,553 @@
+﻿@page "{id}"
+@model BookSite.Areas.MyBooks.Pages.detailsModel
+@{
+}
+<style>
+    #coverArtSizer {
+        position: relative;
+    }
+
+    #sizer {
+        position: absolute;
+        height: calc(100% + 20px);
+        border: 1px dotted red;
+        top: -10px;
+        box-sizing: border-box;
+        background-color: rgba(255, 255, 255, .25);
+    }
+
+    .book3d > div {
+        position: absolute;
+    }
+
+    .book3d {
+        box-shadow: darkgray 0 10px 20px;
+    }
+    .sectionName {
+        list-style: none;
+    }
+</style>
+<div id="book-add-app">
+    <h2 class="display-4 text-sm-right">Book Details</h2>
+    <div class="row" v-if="book.id">
+        <div class="col-sm-3 text-center">
+            <img :src="`/api/books/coverart/${book.id}?t=${refresh}`" style="height: 200px;" alt="" />
+        </div>
+        <div class="col-sm-9">
+            <h3 v-if="book.series" class="bg-dark text-light p-1">{{book.series}}</h3>
+            <h3 class="p-1">{{book.title}}</h3>
+            <h4 class="p-1" v-if="book.subtitle">{{book.subtitle}}</h4>
+            <h5 class="p-1">by {{authorList()}}</h5>
+        </div>
+    </div>
+    <div class="row" v-if="!book">
+        <div class="col-12"><h3>This book doesn't appear to be one you manage</h3></div>
+    </div>
+
+    <ul class="nav nav-tabs nav-justified">
+        <li class="nav-item">
+            <span class=" w-100 nav-link" v-on:click="setActive('info')" :class="{ active: isActive('info') }">Information</span>
+        </li>
+        <li class="nav-item">
+            <span class="w-100 nav-link" v-on:click="setActive('covers')" :class="{ active: isActive('covers') }">Cover Art</span>
+        </li>
+        <li class="nav-item">
+            <span class="w-100 nav-link" v-on:click="setActive('description')" :class="{ active: isActive('description') }">Description</span>
+        </li>
+        <li class="nav-item">
+            <span class="w-100 nav-link" v-on:click="setActive('blurbs')" :class="{ active: isActive('blurbs') }">Blurbs</span>
+        </li>
+        <li class="nav-item">
+            <span class="w-100 nav-link" v-on:click="setActive('editions')" :class="{ active: isActive('editions') }">Editions</span>
+        </li>
+    </ul>
+
+    <div class="tab-content py-3">
+        <div class="tab-pane fade" :class="{ 'active show': isActive('info') }" id="info">
+            <form>
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input v-model="title" type="text" class="form-control" id="title" aria-describedby="emailHelp" placeholder="The title of your book">
+                </div>
+                <div class="form-group form-check">
+                    <input v-model="overrideGeneratedUrl" type="checkbox" class="form-check-input" id="overrideGeneratedUrl">
+                    <label class="form-check-label" for="overrideGeneratedUrl">Change the Auto Generated Title URL (sometimes you may want a short one)</label>
+                </div>
+                <div class="form-group">
+                    <label for="titleUrl">Title URL</label>
+                    <input v-model="titleUrl" :disabled="!overrideGeneratedUrl" type="text" class="form-control" id="titleUrl" aria-describedby="emailHelp">
+                </div>
+                <div class="form-group">
+                    <label for="subtitle">Subtitle</label>
+                    <input v-model="subtitle" type="text" class="form-control" id="subtitle" placeholder="Subtitle (optional)">
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="series">Series</label>
+                            <input v-model="series" type="text" class="form-control" id="series" placeholder="Series (optional)">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label for="seriesOrder">Series #</label>
+                            <input v-model="seriesOrder" type="text" class="form-control" id="seriesOrder" placeholder="# in series (optional)">
+                        </div>
+                    </div>
+                </div>
+                <button v-on:click.prevent="updateBookInfo" class="btn btn-outline-primary">Update Book Information</button> <button v-on:click.prevent="updateBookInfo" class="btn btn-outline-danger">Reset</button>
+            </form>
+        </div>
+        <div class="tab-pane fade" :class="{ 'active show': isActive('covers') }" id="covers">
+            <form enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="col d-flex">
+                        <label class="m-2">Cover&nbsp;Art&nbsp;File:</label>
+                        <input class="form-control-file m-1" type="file" name="coverart" id="coverart" accept="image/*" v-on:change="fileSelect" ref="coverArt" />
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="d-flex">
+                            <label class="m-2">Cover&nbsp;Art&nbsp;Type:</label>
+                            <select class="form-control" v-model="cover.type">
+                                <option value="1">Front</option>
+                                <option value="2">Full</option>
+                                <option value="3">Dust Jacket</option>
+                                <option value="4">Audiobook</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
+                        <button class="btn btn-outline-dark w-100" v-on:click.prevent="uploadCoverArt">Add Cover Art</button>
+                    </div>
+                </div>
+                <div id="coverArtSizer" v-if="cover.id">
+                    <div style="position: relative">
+                        <div id="sizer" :style="`width:${cover.spineWidth}%;left:calc(50% - (${cover.spineWidth}%) / 2)`"></div>
+                        <img v-if="book.id" :src="`/api/books/coverart/${book.id}/${cover.type}`" style="width:100%;" ref="coverArtImage" />
+                    </div>
+                    <div class="d-flex"><div class="mt-4 w-25">Set&nbsp;Spine&nbsp;Width:&nbsp;{{cover.spineWidth}}%</div><input class="mt-4" id="spineSlider" type="range" v-model="cover.spineWidth" min="0" max="20" step=".01" style="width:100%;" /></div>
+                    <button v-on:click.prevent="updateCoverSizings" class="btn btn-sm btn-outline-primary">Update Sizings</button>
+                    <button v-on:click.prevent="sizer({})" class="btn btn-sm btn-outline-danger">Cancel</button>
+                </div>
+            </form>
+            <div class="row" v-if="book.id && !cover.id">
+                <div class="col text-center" v-for="cover in (book.covers)">
+                    <img v-if="cover.type != 2" :src="`/api/books/coverart/${book.id}${cover.type ? '/'+cover.type : ''}?t=${refresh}`"
+                         :style="`height: 200px`" alt="" />
+
+
+                    <div v-if="cover.type == 2" style="height: 200px">
+                        <div :style="bookContainerStyle(cover)">
+                            <div class="book3d" :style="book3dStyle(cover)">
+                                <div :style="book3dCoverStyle(cover)"></div>
+                                <div :style="book3dBackStyle(cover)"></div>
+                                <div :style="book3dEdgeStyle(cover)"></div>
+                                <div :style="book3dSpineStyle(cover)"></div>
+                                <div :style="book3dTopStyle(cover)"></div>
+                                <div :style="book3dBottomStyle(cover)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-1">
+                        <span class="font-weight-bold">{{coverTypeName(cover.type)}}</span>
+                        <button v-if="cover.type == 2" v-on:click="sizer(cover)" class="btn btn-sm btn-outline-dark">Reset Spine Size</button>
+                        <button v-if="cover.type == 3" v-on:click="sizer(cover)" class="btn btn-sm btn-outline-dark">Reset Spine and Flap Size</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" :class="{ 'active show': isActive('description') }" id="description">
+            <div class="row">
+                <div class="col-sm-3">
+                    <h4>SECTIONS</h4>
+                    <p>The description sections will appear in the following order. <br />Drag to reorder.</p>
+                    <draggable :list="sections" v-on:end="updateSectionOrder">
+                        <li class="sectionName btn btn-secondary w-100 mb-1 rounded-pill" v-for="section in sections" v-on:click="editSection(section.id)">{{section.name}}</li>
+                    </draggable>
+                </div>
+                <div class="col-sm-9">
+                    <form enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="sectionName">Section Name</label>
+                            <input v-model="sectionName" type="text" class="form-control" id="sectionName" aria-describedby="emailHelp" placeholder="appears in menu and buttons - 'main' will appear first and link to title">
+                        </div>
+                        <div class="form-group">
+                            <label for="content">Section Content</label>
+                            <textarea v-model="content" class="form-control" id="content" aria-describedby="content"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <label for="series">Background Color</label>
+                                    <input v-model="backgroundColor" type="color" class="form-control" id="series" placeholder="background color">
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <label for="seriesOrder">Text Color</label>
+                                    <input v-model="color" type="color" class="form-control" id="seriesOrder" placeholder="text color">
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div :style="`background-color:${backgroundColor}; color:${color}; font-size: 2em; text-align:center; line-height:2em`">
+                                    Sample Text
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="backgroundImage">Background Image (Optional)</label>
+                                    <input type="file" class="form-control-file m-1" name="backgroundImage" href="backgroundImage" id="backgroundImage" aria-describedby="emailHelp" placeholder="background image" accept="image/*" v-on:change="backgroundImageFileSelect" ref="backgroundImage">
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="form-group" v-if="sectionId">
+                                    <label for="seriesOrder">Delete Image</label>
+                                    <input v-model="deleteImage" type="checkbox" class="form-control" id="deleteImage">
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div :style="`background-image: url(/api/books/backgroundImage/${sectionId}); background-size: cover`"></div>
+                            </div>
+                        </div>
+                        <button v-on:click.prevent="addUpdateSection" class="btn btn-outline-primary">Add Section</button>
+                        @*<button v-on:click.prevent="addUpdateSection" class="btn btn-outline-danger">Reset</button>*@
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" :class="{ 'active show': isActive('blurbs') }" id="blurbs">
+            <div class="form-group">
+                <label for="subtitle">Contents</label>
+                <textarea v-model="blurbContents" type="text" class="form-control" id="blurbContents" placeholder="Blurb Contents"></textarea>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="series">Writer</label>
+                        <input v-model="blurbWriter" type="text" class="form-control" id="blurbWriter" placeholder="name and title of blurb writer">
+                    </div>
+                </div>
+                <div class="col-sm-2">
+                    <div class="form-group">
+                        <label for="seriesOrder">Display Order</label>
+                        <input v-model="blurbDisplayOrder" type="text" class="form-control" id="blurbDisplayOrder" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <button v-on:click.prevent="addUpdateBlurb" class="btn btn-outline-primary">Add Blurb</button> <button v-on:click.prevent="clearBlurb" class="btn btn-outline-danger">Reset</button>
+        </div>
+        <div class="tab-pane fade" :class="{ 'active show': isActive('editions') }" id="editions"></div>
+    </div>
+
+</div>
+
+@section Scripts{
+    <script src="~/lib/axios/axios.min.js"></script>
+    <script src="~/js/app/authorManager.js"></script>
+    <script src="~/js/app/bookManager.js"></script>
+    @*<script src="https://cdn.jsdelivr.net/npm/tinymce-vue@1.0.0/dist/tinymce-vue.min.js"></script>*@
+    <script src="https://cdn.tiny.cloud/1/2qddmu3xjmsrva1dtoim5aleqq6h1oakfdjrt8i9cof20l0d/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+    <!-- CDNJS :: Sortable (https://cdnjs.com/) -->
+    <script src="//cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
+    <!-- CDNJS :: Vue.Draggable (https://cdnjs.com/) -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
+    @*<link href="~/lib/tinymce-vue/dist/tinymce-vue.min.css" rel="stylesheet" />
+        <script src="~/lib/tinymce-vue/dist/tinymce-vue.js"></script>*@
+    <script>
+        tinymce.init({
+            selector: 'textarea#content',
+            menubar: false,
+            fontsize_formats: ".8em 1em 1.25em 1.5em 2em 3em",
+            toolbar: 'undo redo | bold italic underline forecolor | formatselect | fontsizeselect | forecolorpicker | hr alignleft aligncenter alignright alignjustify | bullist numlist |  link',
+            plugins: 'lists advlist textcolor link'
+
+        });
+    </script>
+    <script>
+        const bookAddApp = new Vue({
+            el: "#book-add-app",
+            components: {
+                //'editor': Editor
+            },
+            data: {
+                book: {},
+                cover: { type: 2 },
+                refresh: 0,
+                thumbHeight: 180,
+                activeSection: "description",
+                title: "",
+                overrideGeneratedUrl: "",
+                titleUrl: "",
+                subtitle: "",
+                series: "",
+                seriesOrder: null,
+                sectionName: "",
+                content: "",
+                backgroundColor: "#ffffff",
+                color: "#000000",
+                deleteImage: false,
+                sectionId: null,
+                sections: [{ name: "Blurbs" }, { name: "Buy" }],
+                blurbContents: "",
+                blurbWriter: "",
+                blurbDisplayOrder: ""
+            },
+            computed: {
+                computedTitleUrl() {
+                    if (!this.overrideGeneratedUrl) {
+                        this.titleUrl = this.title.replace(/[\W]*/g, "").toLowerCase();
+                    }
+                },
+                coverArtWidth() {
+                    if (this.$refs && this.$refs.coverArtImage) {
+                        return this.$refs.coverArtImage.clientWidth;
+                    }
+                    return 0;
+                },
+
+            },
+            methods: {
+                editSection(sectionId) {
+                    let section = this.sections.find(function (section) {
+                        return section.id == sectionId;
+                    });
+                    if (section) {
+                        this.sectionName = section.name;
+                        this.backgroundColor = section.backgroundColor;
+                        this.color = section.color;
+                        $("#content_ifr").contents().find("#tinymce").html(section.content);
+                    }
+                },
+                updateSectionOrder() {
+                    let self = this;
+                    Vue.nextTick(function () {
+                        self.sections.forEach(function (section, index) {
+                        section.order = index;
+                    })
+                    bookManager.updateSectionOrder(self.book.id, self.sections)
+                        .then(function () {
+                            console.log(self.sections);
+                        })
+                    })
+                    
+                },
+                backgroundImageFileSelect() {
+                    this.backgroundImageFile = this.$refs.backgroundImage.files[0];
+                },
+                addUpdateSection() {
+                    let self = this;
+                    this.content = $("#content_ifr").contents().find("#tinymce").html()
+                    console.log($("#content_ifr").contents().find("#tinymce").html());
+                    const formData = new FormData();
+                    formData.append('backgroundImage', this.backgroundImageFile);
+                    formData.append('name', this.sectionName);
+                    formData.append('content', this.content);
+                    formData.append('backgroundColor', this.backgroundColor);
+                    formData.append('color', this.color);
+                    bookManager.addUpdateSection(this.book.id, formData, this.sectionId)
+                        .then(function (result) {
+                            console.log("SECTION UPSERTED");
+                            self.sectionId = null;
+                            self.name = "";
+                            self.content = "";
+                            self.backgroundColor = "#FFFFFF";
+                            self.color = "#000000";
+                            self.deleteImage = false;
+                            this.$refs.backgroundImage.files = [];
+                            if (result.name == "main") {
+                                self.sections.unshift(result);
+                            } else {
+                                self.sections.push(result);
+                            }
+                        })
+                        .catch(function (error) {
+                            console.log(error)
+                        })
+                },
+                isActive (menuItem) {
+                    return this.activeSection === menuItem
+                },
+                setActive (menuItem) {
+                    this.activeSection = menuItem
+                },
+                authorList() {
+                    if (this.book.authors) {
+                        return bookManager.authorList(this.book.authors);
+                    }
+                },
+                fileSelect() {
+                    this.coverArtFile = this.$refs.coverArt.files[0];
+                },
+                uploadCoverArt() {
+                    let self = this;
+                    const formData = new FormData();
+                    formData.append('file', this.coverArtFile);
+                    formData.append('type', this.cover.type);
+                    bookManager.uploadCoverArt(this.book.id, formData)
+                        .then(function (result) {
+                            let coverArt = result.data;
+                            if (!self.book.covers.some(function (cover) {
+                                return cover.id == coverArt.id;
+                            })) {
+                                self.book.covers.push(coverArt);
+                            }
+                            self.refresh = self.refresh + 1;
+                            self.cover = coverArt;
+                        })
+                        .catch(function (error) {
+                            console.log(error)
+                        })
+                },
+                updateBook() {
+                    bookManager.updateBook(this.book)
+                        .then(function (result) {
+
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                        });
+                },
+                updateBookInfo() {
+                    this.book.title = this.title;
+                    this.book.titleUrl = this.titleUrl;
+                    this.book.subtitle = this.subtitle;
+                    this.book.series = this.series;
+                    this.book.seriesOrder = this.seriesOrder
+                    this.updateBook();
+                },
+
+
+                updateCoverSizings() {
+                    let self = this;
+                    bookManager.updateCoverSizings(this.cover)
+                        .then(function () {
+                            self.cover = {};
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        })
+                }
+                ,
+                coverTypeName(coverType) {
+                    switch (coverType) {
+                        case 1:
+                            return "Front";
+                        case 2:
+                            return "Full";
+                        case 3:
+                            return "Dust Jacket";
+                        default:
+                            return "Audiobook";
+
+
+                    }
+                },
+                sizer(cover) {
+                    this.cover = cover;
+                },
+                sizes(cover, heightInPixels) {
+                    let height = heightInPixels;
+                    let width = (cover.width * ((100 - cover.spineWidth) / 200)) * (heightInPixels / cover.height); //
+                    let spine = (cover.width * cover.spineWidth / 100) * (heightInPixels / cover.height);
+                    return {
+                        height,
+                        width,
+                        spine
+                    }
+                },
+                bookContainerStyle(cover) {
+                    let sizes = this.sizes(cover, this.thumbHeight)
+                    return `width: ${sizes.width}px;
+                    height: ${sizes.height}px;
+                    perspective: ${sizes.height * 2}px;
+                    margin: 0 auto;
+                    position:relative;`;
+                },
+                book3dStyle(cover) {
+                    let sizes = this.sizes(cover, this.thumbHeight)
+                    return `width: 100%;
+                    height: 100%;
+                    position: relative;
+                    transform-style: preserve-3d;
+                    transform: translateZ(0) rotateY(30deg) rotateX(30deg) rotateZ(0deg);`
+                },
+                book3dCoverStyle(cover) {
+                    let sizes = this.sizes(cover, this.thumbHeight)
+                    return `width: 100%; height: 100%;
+                    background-image: url('/api/books/coverart/${this.book.id}/2?t=0');
+                    background-size:cover;
+                    background-position: right;
+                    transform: rotateY(0deg) translateZ(${sizes.spine / 2}px);`
+                },
+                book3dBackStyle(cover) {
+                    let sizes = this.sizes(cover, this.thumbHeight)
+                    return `width: 100%; height: 100%;
+                    background-image: url('/api/books/coverart/${this.book.id}/2?t=0');
+                    background-size:cover;
+                    background-position: left;
+                    transform: rotateY(180deg) translateZ(${sizes.spine / 2}px);`;
+                },
+                book3dSpineStyle(cover) {
+                    let sizes = this.sizes(cover, this.thumbHeight)
+                    return `width: ${sizes.spine}px;
+                    height: 100%;
+                    background-image: url('/api/books/coverart/${this.book.id}/2?t=0');
+                    background-size:cover;
+                    background-position:center;
+                    transform: rotateY(-90deg) translateZ(${sizes.spine / 2}px);`;
+                },
+                book3dEdgeStyle(cover) {
+                    let sizes = this.sizes(cover, this.thumbHeight)
+                    return `width: ${sizes.spine}px;
+                    height: 100%;
+                    background: whitesmoke;
+                    transform: rotateY(90deg) translateZ(${sizes.width - sizes.spine / 2}px);`;
+                },
+                book3dTopStyle(cover) {
+                    let sizes = this.sizes(cover, this.thumbHeight)
+                    return `width: 100%;
+                    height: ${sizes.spine}px;
+                    background: whitesmoke;
+                    transform: rotateX(90deg) translateZ(${sizes.spine / 2}px);`;
+                },
+                book3dBottomStyle(cover) {
+                    let sizes = this.sizes(cover, this.thumbHeight)
+                    return `width: 100%;
+                    height: ${sizes.spine}px;
+                    background: whitesmoke;
+                    transform: rotateX(-90deg) translateZ(${sizes.height - sizes.spine / 2}px);`;
+                }
+            },
+            mounted() {
+                let self = this;
+                bookManager.getBookById(@Model.BookId)
+                    .then(function (response) {
+                        self.book = response.data;
+                        self.title = self.book.title;
+                        self.titleUrl = self.book.titleUrl || self.title.replace(/[\W]*/g, "").toLowerCase();
+                        self.subtitle = self.book.subtitle;
+                        self.series = self.book.series;
+                        self.seriesOrder = self.book.seriesOrder;
+                        self.overrideGeneratedUrl = self.titleUrl != self.title.replace(/[\W]*/g, "").toLowerCase()
+                        self.sections = self.book.sections.slice(0);
+                        if (self.book.blurbs && self.book.blurbs.length) {
+                            self.sections.push({Name: "Blurbs", Order: self.book.blurbOrder })
+                        }
+                        if (self.book.markets && self.book.markets.length) {
+                            self.sections.push({Name: "Buy", Order: self.book.buyOrder })
+                        }
+                        self.sections.sort(function (a, b) {
+                            return a.order - b.order;
+                        });
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                    });
+            }
+        });
+    </script>
+}
+

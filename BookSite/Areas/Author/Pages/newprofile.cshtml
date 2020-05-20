@@ -1,0 +1,66 @@
+﻿@page
+@model BookSite.Areas.Author.Pages.newProfileModel
+@{
+}
+<div id="author-add-app">
+    <h2 class="display-4">Create an Author Profile</h2>
+    <p>We need a little more information about you as an Author to help present and promote your books. </p>
+    <form method="post">
+        <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input v-model="firstName" type="text" class="form-control" id="firstName" name="firstname" aria-describedby="" placeholder="first name">
+        </div>
+        <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input v-model="lastName" type="text" class="form-control" id="lastName" name="lastname" aria-describedby="" placeholder="last name">
+        </div>
+        <div class="form-group form-check">
+            <input v-model="notSameAsLegal" type="checkbox" class="form-check-input" id="notSameAsLegal">
+            <label class="form-check-label" for="sameAsLegal">My Pen Name is different from my Legal Name</label>
+        </div>
+        <div class="form-group">
+            <label for="penname">Pen Name <em>(your name as it appears on your books)</em></label>
+            <input :disabled="!notSameAsLegal" v-model="penName" type="text" class="form-control" id="penName" name="penname" aria-describedby="" placeholder="pen name">
+        </div>
+        <input type="hidden" value="" v-model="computedPenName" />
+        <button v-on:click.prevent="addAuthor" type="submit" class="btn btn-primary">Sign Up</button>
+    </form>
+</div>
+
+@section Scripts{
+    <script src="~/lib/axios/axios.min.js"></script>
+    <script src="~/js/app/authorManager.js"></script>
+    <script>
+        const authorAddApp = new Vue({
+            el: "#author-add-app",
+            data: {
+                firstName: "",
+                lastName: "",
+                penName: "",
+                notSameAsLegal: false
+            },
+            computed: {
+                computedPenName: function () {
+                    if (!this.notSameAsLegal) {
+                        this.penName = this.firstName + " " + this.lastName;
+                    }
+                }
+            },
+            methods: {
+                addAuthor: function () {
+                    authorManager.saveAuthor({
+                        firstName: this.firstName,
+                        lastName: this.lastName,
+                        penName: this.penName
+                    }).then(function () {
+                        console.log("Author Saved");
+                        location.href = "/author/manage";
+                    }).catch(function (error) {
+                        console.error(error);
+                    })
+                }
+            }
+        });
+    </script>
+}
+

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace BookSite.Models
@@ -15,6 +16,9 @@ namespace BookSite.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string PenName { get; set; }
+        public string PenNameUrl { get; set; }
         public List<Collaborator> Collaborators { get; set; }
+        [JsonIgnore]
+        public List<BookAuthor> Books { get; set; }
     }
 }

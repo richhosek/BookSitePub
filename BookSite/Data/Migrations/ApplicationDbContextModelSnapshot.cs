@@ -15,7 +15,7 @@ namespace BookSite.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.0.0")
+                .HasAnnotation("ProductVersion", "3.1.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -35,6 +35,9 @@ namespace BookSite.Data.Migrations
                     b.Property<string>("PenName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PenNameUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SiteUserId")
                         .HasColumnType("nvarchar(450)");
 
@@ -45,6 +48,32 @@ namespace BookSite.Data.Migrations
                     b.ToTable("Authors");
                 });
 
+            modelBuilder.Entity("BookSite.Models.Blurb", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Quote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("Blurbs");
+                });
+
             modelBuilder.Entity("BookSite.Models.Book", b =>
                 {
                     b.Property<int>("Id")
@@ -52,7 +81,34 @@ namespace BookSite.Data.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<int>("BlurbOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BuyOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ComingSoon")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("PublishedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Series")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SeriesOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Subtitle")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TitleUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -73,6 +129,12 @@ namespace BookSite.Data.Migrations
                     b.Property<int>("BookId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsManager")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
@@ -80,6 +142,29 @@ namespace BookSite.Data.Migrations
                     b.HasIndex("BookId");
 
                     b.ToTable("BookAuthors");
+                });
+
+            modelBuilder.Entity("BookSite.Models.BookSiteAccount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Accounts");
                 });
 
             modelBuilder.Entity("BookSite.Models.Collaborator", b =>
@@ -102,6 +187,64 @@ namespace BookSite.Data.Migrations
                     b.HasIndex("CoAuthorId");
 
                     b.ToTable("Collaborators");
+                });
+
+            modelBuilder.Entity("BookSite.Models.CoverArt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<float>("Height")
+                        .HasColumnType("real");
+
+                    b.Property<int>("ImageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<float>("InsideFlapWidth")
+                        .HasColumnType("real");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<float>("SpineWidth")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<float>("Width")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("ImageId");
+
+                    b.ToTable("Covers");
+                });
+
+            modelBuilder.Entity("BookSite.Models.CoverImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<byte[]>("Bytes")
+                        .HasColumnType("varbinary(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Images");
                 });
 
             modelBuilder.Entity("BookSite.Models.Edition", b =>
@@ -176,6 +319,43 @@ namespace BookSite.Data.Migrations
                     b.HasIndex("VendorId");
 
                     b.ToTable("Listings");
+                });
+
+            modelBuilder.Entity("BookSite.Models.Section", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("BackgroundColor")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("BackgroundImageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BackgroundImageId");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("Sections");
                 });
 
             modelBuilder.Entity("BookSite.Models.Vendor", b =>
@@ -339,12 +519,10 @@ namespace BookSite.Data.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(128)")
-                        .HasMaxLength(128);
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(128)")
-                        .HasMaxLength(128);
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -381,12 +559,10 @@ namespace BookSite.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(128)")
-                        .HasMaxLength(128);
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(128)")
-                        .HasMaxLength(128);
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");
@@ -403,10 +579,19 @@ namespace BookSite.Data.Migrations
                         .HasForeignKey("SiteUserId");
                 });
 
+            modelBuilder.Entity("BookSite.Models.Blurb", b =>
+                {
+                    b.HasOne("BookSite.Models.Book", "Book")
+                        .WithMany("Blurbs")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BookSite.Models.BookAuthor", b =>
                 {
                     b.HasOne("BookSite.Models.Author", "Author")
-                        .WithMany()
+                        .WithMany("Books")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -416,6 +601,13 @@ namespace BookSite.Data.Migrations
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BookSite.Models.BookSiteAccount", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("BookSite.Models.Collaborator", b =>
@@ -429,6 +621,21 @@ namespace BookSite.Data.Migrations
                     b.HasOne("BookSite.Models.Author", "CoAuthor")
                         .WithMany()
                         .HasForeignKey("CoAuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BookSite.Models.CoverArt", b =>
+                {
+                    b.HasOne("BookSite.Models.Book", "Book")
+                        .WithMany("Covers")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookSite.Models.CoverImage", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -460,6 +667,21 @@ namespace BookSite.Data.Migrations
                     b.HasOne("BookSite.Models.Vendor", "Vendor")
                         .WithMany()
                         .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BookSite.Models.Section", b =>
+                {
+                    b.HasOne("BookSite.Models.CoverImage", "BackgroundImage")
+                        .WithMany()
+                        .HasForeignKey("BackgroundImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookSite.Models.Book", "Book")
+                        .WithMany("Sections")
+                        .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
