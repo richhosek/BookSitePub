@@ -64,6 +64,12 @@
     },
     updateSectionOrder(bookId, sections) {
         return axios.put(`/api/books/sectionorder/${bookId}`, sections);
+    },
+    addUpdateBlurb(bookId, blurb) {
+        return axios.post(`/api/books/blurb/${bookId}`, blurb);
+    },
+    addUpdateEdition(bookId, edition) {
+        return axios.post(`/api/books/edition/${bookId}`, edition);
     }
 
 

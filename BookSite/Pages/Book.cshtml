@@ -24,6 +24,15 @@
         .book3d {
             /*box-shadow: darkgray 0 10px 20px;*/
         }
+        .blurbQuote {
+            font-weight: bold;
+            text-align: center;
+        }
+        .blurbSource {
+            font-style: italic;
+            text-align: right;
+            margin-bottom: 1em;
+        }
     </style>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=scrollIntoView"></script>
 </head> 
@@ -41,9 +50,18 @@
             <div id="section-nav">
                 @foreach (var sec in Model.Book.Sections.Where(s => s.NavId != "main"))
                 {
+                    var minSectionOrder = Model.Book.Sections.Where(s => s.NavId != "main").Min(s => s.Order);
+                    if (minSectionOrder == sec.Order && minSectionOrder > Model.Book.BlurbOrder)
+                    {
+                        <span v-on:click="scrollTo('#blurbs')">Blurbs</span>
+                    }
                     <span v-on:click="scrollTo('#@sec.NavId.Replace(" ", "")')">@sec.Name</span>
+                    if (Model.Book.BlurbOrder == sec.Order + 1)
+                    {
+
+                    }
                 }
-                <span v-on:click="scrollTo('#blurbs')">Blurbs</span>
+
                 <span v-on:click="scrollTo('#more')">More</span>
             </div>
         </nav>
@@ -66,20 +84,34 @@
             <section id="@sec.NavId.Replace(" ", "")" style="background-color: @sec.BackgroundColor; text-align: left; background-image: url(/api/books/sectionbackground/@sec.Id); background-size: cover; color: @sec.Color; text-shadow: -.1vmax .1vmax .2vmax @sec.BackgroundColor;">
                 <div class="content">@Html.Raw(sec.Content)</div>
             </section>
+            if (Model.Book.BlurbOrder == sec.Order + 1)
+            {
+                // display Blurb Section here
+                <section id="blurbs" style="_background-color: @sec.BackgroundColor; text-align: left; _background-image: url(/api/books/sectionbackground/@sec.Id); _background-size: cover; _color: @sec.Color; _text-shadow: -.1vmax .1vmax .2vmax @sec.BackgroundColor;">
+                    <div class="content">
+                        <h2>BLURBS</h2>
+                        @foreach (var blurb in Model.Book.Blurbs.OrderBy(b => b.Order))
+                        {
+                            <div class="blurbQuote">"@blurb.Quote"</div>
+                            <div class="blurbSource">–@blurb.Source</div>
+                        }
+                    </div>
+                </section>
+            }
         }
         @*<section id="main" style="background-color: darkgray; text-align: right">
             <div class="content">
                 <h2>Raney and Daye</h2><p><strong>Near Death</strong>&nbsp;introduces us to parapsychologist and anthropology professor Dr. Jennifer Daye and police detective Nate Raney in a story of murder, ghosts, a near-death experience.<br data-mce-bogus="1"></p><p>When Nate is shot during a high-stakes robbery, he awakes from the ordeal during which he was clinically dead with the information he needs to track down the men who shot him. However, he remains skeptical that there was anything supernatural about his experience.</p><p>Jennifer thinks otherwise and tries to convince Nate to share his experience. They team up to investigate a case involving a woman with an uninvited apparition in her apartment that leads them to uncover and solve a decades-old mystery.</p><p><strong>Near Death</strong> is a fast-paced story that takes you on an exciting journey through the paranormal.</p>
             </div>
         </section>*@
-        <section id="blurbs" style="background-color: lightcoral; text-align: right">
+        @*<section id="blurbs" style="background-color: lightcoral; text-align: right">
             <div class="content">
                 <h3>BACON</h3>
                 <p>Bacon ipsum dolor amet sausage kielbasa beef pork belly spare ribs chislic pig bacon turkey. Prosciutto ham hock tri-tip, drumstick picanha t-bone turkey chuck ground round chicken corned beef andouille short loin alcatra. Spare ribs meatball beef ribs, chuck pancetta kielbasa venison landjaeger cupim biltong kevin turkey ham tail chislic. Pastrami t-bone drumstick shank, chislic tail landjaeger prosciutto.</p>
 
                 <p style="font-size: 1.25em">Shoulder shankle doner bacon t-bone. Brisket ball tip shoulder rump pancetta meatball tri-tip ribeye tenderloin flank biltong tail cupim. Cow frankfurter beef ribs sirloin kevin flank pig pastrami. Rump chicken shankle fatback ham frankfurter corned beef meatball drumstick pork chop alcatra tongue kielbasa porchetta.</p>
             </div>
-        </section>
+        </section>*@
         <section id="more" style="background-color: darkgray; text-align: right">
             <div class="content">
                 <h3>BACON</h3>

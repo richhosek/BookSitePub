@@ -21,7 +21,6 @@ namespace BookSite.Models
         public string Content { get; set; }
         public string BackgroundColor { get; set; }
         public string Color { get; set; }
-        [JsonIgnore]
         public int BackgroundImageId { get; set; }
         public CoverImage BackgroundImage { get; set; }
         public int Order { get; set; }

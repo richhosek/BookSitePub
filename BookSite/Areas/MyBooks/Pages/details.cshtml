@@ -26,6 +26,9 @@
     .sectionName {
         list-style: none;
     }
+    #content {
+        height: 25vh;
+    }
 </style>
 <div id="book-add-app">
     <h2 class="display-4 text-sm-right">Book Details</h2>
@@ -163,7 +166,7 @@
                     <h4>SECTIONS</h4>
                     <p>The description sections will appear in the following order. <br />Drag to reorder.</p>
                     <draggable :list="sections" v-on:end="updateSectionOrder">
-                        <li class="sectionName btn btn-secondary w-100 mb-1 rounded-pill" v-for="section in sections" v-on:click="editSection(section.id)">{{section.name}}</li>
+                        <button class="sectionName btn btn-secondary w-100 mb-1 rounded-pill" v-for="section in sections" v-on:click="section.name == 'Blurbs' ? goToBlurbs() : editSection(section.id)" >{{section.name}}</button>
                     </draggable>
                 </div>
                 <div class="col-sm-9">
@@ -203,16 +206,16 @@
                                 </div>
                             </div>
                             <div class="col-sm-2">
-                                <div class="form-group" v-if="sectionId">
+                                <div class="form-group" v-if="backgroundImageId">
                                     <label for="seriesOrder">Delete Image</label>
                                     <input v-model="deleteImage" type="checkbox" class="form-control" id="deleteImage">
                                 </div>
                             </div>
                             <div class="col-sm-4">
-                                <div :style="`background-image: url(/api/books/backgroundImage/${sectionId}); background-size: cover`"></div>
+                                <div :style="`background-image: url(/api/books/sectionbackground/${sectionId}); background-size: cover; height:100%;`"></div>
                             </div>
                         </div>
-                        <button v-on:click.prevent="addUpdateSection" class="btn btn-outline-primary">Add Section</button>
+                        <button v-on:click.prevent="addUpdateSection" class="btn btn-outline-primary">{{sectionId ? "Update" : "Add"}} Section</button>
                         @*<button v-on:click.prevent="addUpdateSection" class="btn btn-outline-danger">Reset</button>*@
                     </form>
                 </div>
@@ -220,14 +223,14 @@
         </div>
         <div class="tab-pane fade" :class="{ 'active show': isActive('blurbs') }" id="blurbs">
             <div class="form-group">
-                <label for="subtitle">Contents</label>
-                <textarea v-model="blurbContents" type="text" class="form-control" id="blurbContents" placeholder="Blurb Contents"></textarea>
+                <label for="subtitle">Quote</label>
+                <textarea v-model="blurbQuote" type="text" class="form-control" id="blurbQuote" placeholder="blurb quote"></textarea>
             </div>
             <div class="row">
                 <div class="col">
                     <div class="form-group">
-                        <label for="series">Writer</label>
-                        <input v-model="blurbWriter" type="text" class="form-control" id="blurbWriter" placeholder="name and title of blurb writer">
+                        <label for="series">Source</label>
+                        <input v-model="blurbSource" type="text" class="form-control" id="blurbSource" placeholder="name and/or title of blurb source">
                     </div>
                 </div>
                 <div class="col-sm-2">
@@ -238,8 +241,51 @@
                 </div>
             </div>
             <button v-on:click.prevent="addUpdateBlurb" class="btn btn-outline-primary">Add Blurb</button> <button v-on:click.prevent="clearBlurb" class="btn btn-outline-danger">Reset</button>
+            <hr />
+            <div v-for="blurb in book.blurbs">
+                <div class="blurbQUote">"{{blurb.quote}}"</div>
+                <div class="blurbSource">–{{blurb.source}}</div>
+            </div>
         </div>
-        <div class="tab-pane fade" :class="{ 'active show': isActive('editions') }" id="editions"></div>
+        <div class="tab-pane fade" :class="{ 'active show': isActive('editions') }" id="editions">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label for="editionNumber">Edition Number</label>
+                        <input v-model="editionNumber" type="text" class="form-control" id="editionNumber" placeholder="edition number">
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label for="editionDate">Publication Date</label>
+                        <input v-model="editionDate" type="date" class="form-control" id="editionDate" placeholder="publication date">
+                    </div>
+                </div>
+            </div>
+            <button v-on:click.prevent="addUpdateEdition" class="btn btn-outline-primary">Add Edition</button> <button v-on:click.prevent="clearBlurb" class="btn btn-outline-danger">Reset</button>
+            <hr />
+            <div v-for="edition in book.editions" class="form-row">
+                <div class="col">{{ordinal(edition.number)}} Edition published on {{(new Date(edition.publishedOn)).toLocaleDateString()}}</div>
+                <div class="col">
+                    <select class="form-control">
+                        <option>eBook</option>
+                        <option>Paperback</option>
+                        <option>Hardcover</option>
+                        <option>AudioBook</option>
+                    </select>
+                </div>
+                @*<div class="col">
+                    <select class="form-control">
+                        <option>Amazon Kindle</option>
+                        <option>Amazon</option>
+                        <option>Apple Books</option>
+                        <option>Audible</option>
+                    </select>
+                </div>
+                <div class="col"><input class="form-control" type="text" value="" placeholder="url to purchase book" /></div>*@
+                <div class="col"><button class="btn btn-outline-primary">Add Format</button></div>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -277,7 +323,7 @@
                 cover: { type: 2 },
                 refresh: 0,
                 thumbHeight: 180,
-                activeSection: "description",
+                activeSection: "editions",
                 title: "",
                 overrideGeneratedUrl: "",
                 titleUrl: "",
@@ -287,13 +333,16 @@
                 sectionName: "",
                 content: "",
                 backgroundColor: "#ffffff",
+                backgroundImageId: null,
                 color: "#000000",
                 deleteImage: false,
                 sectionId: null,
-                sections: [{ name: "Blurbs" }, { name: "Buy" }],
-                blurbContents: "",
-                blurbWriter: "",
-                blurbDisplayOrder: ""
+                //sections: [{ name: "Blurbs" }, { name: "Buy" }],
+                blurbQuote: "",
+                blurbSource: "",
+                blurbDisplayOrder: "",
+                editionNumber: "",
+                editionDate: ""
             },
             computed: {
                 computedTitleUrl() {
@@ -307,16 +356,65 @@
                     }
                     return 0;
                 },
+                sections() {
+                    if (this.book && this.book.sections) {
+                        console.log(this.book.sections)
+                        let sections = this.book.sections.slice(0);
+                        if (this.book.blurbs && this.book.blurbs.length) {
+                            sections.push({ name: "Blurbs", order: this.book.blurbOrder })
+                        }
+                        //if (this.book.markets && this.book.markets.length) {
+                        //    sections.push({ name: "Buy", Order: this.book.buyOrder })
+                        //}
+                        sections.sort(function (a, b) {
+                            return a.order - b.order;
+                        });
+                        return sections;
+                    } 
 
+                    return [];
+                }
             },
             methods: {
+                ordinal(number) {
+                    switch (number) {
+                        case 1:
+                            return "First";
+                        case 2:
+                            return "Second";
+                        case 3:
+                            return "Third";
+                        case 4:
+                            return "Fourth";
+                        case 5:
+                            return "Fifth";
+                        case 6:
+                            return "Sixth";
+                        case 7:
+                            return "Seventh";
+                        case 8:
+                            return "Eighth";
+                        case 9:
+                            return "Ninth";
+                        case 10:
+                            return "Tenth";
+                        default:
+                            return "Last";
+                    };
+
+                },
+                goToBlurbs() {
+                    console.log("EDIT BLURBS");
+                },
                 editSection(sectionId) {
                     let section = this.sections.find(function (section) {
                         return section.id == sectionId;
                     });
                     if (section) {
                         this.sectionName = section.name;
+                        this.sectionId = section.id;
                         this.backgroundColor = section.backgroundColor;
+                        this.backgroundImageId = section.backgroundImageId;
                         this.color = section.color;
                         $("#content_ifr").contents().find("#tinymce").html(section.content);
                     }
@@ -336,6 +434,49 @@
                 },
                 backgroundImageFileSelect() {
                     this.backgroundImageFile = this.$refs.backgroundImage.files[0];
+                },
+                addUpdateEdition() {
+                    let self = this;
+                    let edition = {
+                        number: parseInt(this.editionNumber),
+                        publishedOn: this.editionDate
+                    };
+                    bookManager.addUpdateEdition(this.book.id, edition)
+                        .then(function ({ data }) {
+                            console.log("EDITION ADDED");
+                            let existingEdition = self.book.editions.find(function (edition) { edition.id == data.id });
+                            if (existingEdition) {
+                                existingEdition.number = data.number;
+                                existingEdition.publishedOn = data.publishedOn;
+                            } else {
+                                self.book.editions.push(data);
+                            }
+                            self.book.editions.sort(function (a, b) { return a.number - b.number});
+                        })
+                },
+                addUpdateBlurb() {
+                    let self = this;
+                    let blurb = {
+                        quote: this.blurbQuote,
+                        source: this.blurbSource,
+                        order: this.blurbOrder || 0
+                    };
+                    bookManager.addUpdateBlurb(this.book.id, blurb)
+                        .then(function ({ data }) {
+                            console.log("BLURB ADDED");
+                            let existingBlurb = self.book.blurbs.find(function (blurb) { blurb.id == data.id });
+                            if (existingBlurb) {
+                                existingBlurb.quote = data.quote;
+                                existingBlurb.source = data.source;
+                                existingBlurb.order = data.order;
+                            } else {
+                                self.book.blurbs.push(data);
+                            }
+                            self.book.blurbs.sort(function (a, b) { return a.order - b.order });
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                        });
                 },
                 addUpdateSection() {
                     let self = this;
@@ -532,15 +673,10 @@
                         self.series = self.book.series;
                         self.seriesOrder = self.book.seriesOrder;
                         self.overrideGeneratedUrl = self.titleUrl != self.title.replace(/[\W]*/g, "").toLowerCase()
-                        self.sections = self.book.sections.slice(0);
-                        if (self.book.blurbs && self.book.blurbs.length) {
-                            self.sections.push({Name: "Blurbs", Order: self.book.blurbOrder })
-                        }
-                        if (self.book.markets && self.book.markets.length) {
-                            self.sections.push({Name: "Buy", Order: self.book.buyOrder })
-                        }
-                        self.sections.sort(function (a, b) {
-                            return a.order - b.order;
+                        
+
+                        self.book.blurbs.sort(function (a, b) {
+                            return a.order - b.order
                         });
                     })
                     .catch(function (error) {

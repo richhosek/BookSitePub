@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using System.IO;
 using SkiaSharp;
 using System.Drawing;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace BookSite.Controllers
 {
@@ -88,6 +89,9 @@ namespace BookSite.Controllers
                 .Include(b => b.Covers)
                 .Include(b => b.Sections)
                 .Include(b => b.Blurbs)
+                .Include(b => b.Editions)
+                .ThenInclude(e => e.Formats)
+                .ThenInclude(f => f.Listings)
                 .Include(b => b.Authors).ThenInclude(a => a.Author)
                 .FirstOrDefaultAsync(b => b.Id == id);
 
@@ -176,6 +180,73 @@ namespace BookSite.Controllers
             await _context.SaveChangesAsync();
 
             return book;
+        }
+
+        [HttpPost("blurb/{id}")]
+        public async Task<IActionResult> AddUpdateBlurb(int id, Blurb blurb)
+        {
+            if (blurb != null)
+            {
+                if(blurb.Id == 0)
+                {
+                    // new blurb
+                    var book = await _context.Books.Include(b => b.Blurbs).FirstOrDefaultAsync(b => b.Id == id);
+                    if (blurb.Order == 0)
+                    {
+                        if (book.Blurbs.Count > 0)
+                        {
+                            blurb.Order = book.Blurbs.Max(b => b.Order) + 1;
+                        } else
+                        {
+                            blurb.Order = 1;
+                        }
+                    }
+                    book?.Blurbs.Add(blurb);
+                }else
+                {
+                    // update blurb
+                    var dbBlurb = await _context.Blurbs.FindAsync(blurb.Id);
+                    dbBlurb.Quote = blurb.Quote;
+                    dbBlurb.Source = blurb.Source;
+                    dbBlurb.Order = blurb.Order;
+                    blurb = dbBlurb;
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(blurb);
+            }
+            return NotFound();
+        }
+
+        [HttpPost("edition/{id}")]
+        public async Task<IActionResult> AddUpdateEdition(int id, Edition edition)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Ok(ModelState);
+            }
+            if (edition != null)
+            {
+                if (edition.Id == 0)
+                {
+                    // new blurb
+                    var book = await _context.Books.Include(b => b.Editions).FirstOrDefaultAsync(b => b.Id == id);
+                    
+                    book?.Editions.Add(edition);
+                }
+                else
+                {
+                    // update edition
+                    var dbEdition = await _context.Editions.FindAsync(edition.Id);
+                    dbEdition.Number = edition.Number;
+                    dbEdition.PublishedOn = edition.PublishedOn;
+                    edition = dbEdition;
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(edition);
+            }
+            return NotFound();
         }
 
         [HttpPost("section/{id}/{sectionId?}")]
