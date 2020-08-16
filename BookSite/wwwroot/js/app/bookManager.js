@@ -70,6 +70,12 @@
     },
     addUpdateEdition(bookId, edition) {
         return axios.post(`/api/books/edition/${bookId}`, edition);
+    },
+    addUpdateFormat(editionId, format) {
+        return axios.post(`/api/books/format/${editionId}`, format);
+    },
+    addUpdateListing(formatId, listing) {
+        return axios.post(`/api/books/listing/${formatId}`, listing);
     }
 
 

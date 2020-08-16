@@ -1,6 +1,7 @@
 ﻿@page "/{penNameUrl}/{titleUrl?}"
 @model BookSite.BookModel
-
+@{ var listings = new List<BookSite.Models.Listing>(); }
+@{Model.Book.Editions.FirstOrDefault()?.Formats.ForEach(f => f.Listings.ForEach(l => listings.Add(l)));}
 @{
     Layout = null;
 }
@@ -24,29 +25,81 @@
         .book3d {
             /*box-shadow: darkgray 0 10px 20px;*/
         }
+
         .blurbQuote {
             font-weight: bold;
             text-align: center;
         }
+
         .blurbSource {
             font-style: italic;
             text-align: right;
             margin-bottom: 1em;
         }
+
+        #buyLinks {
+            position: fixed;
+            bottom: 50vh;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            transition: .5s;
+        }
+
+        #buyLinks.showing {
+            right: -50vw;
+            transition: .5s;
+        }
+
+            #buyLinks button {
+                position: relative;
+                text-align: left;
+                font-size: 25px;
+                height: 50px;
+                border-radius: 25px 0 0 25px;
+                padding-left: 60px;
+                margin: 12.5px 0;
+                background-size: contain;
+                background-position: left;
+                background-repeat: no-repeat;
+                left: calc(100% - 60px);
+                box-shadow: rgba(0, 0, 0, .5) -5px 5px 5px;
+                border-right: none;
+            }
+
+                #buyLinks button:hover {
+                    left: 0;
+                    transition: .5s;
+                }
+
+                #buyLinks button:focus {
+                    outline: none;
+                }
+
+        #buy a {
+            display: flex;
+            background-position: left;
+            background-size: 1em;
+            background-repeat: no-repeat;
+            padding-left: 1.5em;
+            margin: 10px 0;
+            box-shadow: rgba(0, 0, 0, .5) -5px 5px 5px;
+            background-color: #EEE;
+        }
     </style>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=scrollIntoView"></script>
-</head> 
+</head>
 <body>
-    
+
     <div id="book-app">
         <nav>
             <div class="title">
                 <span v-on:click="scrollTo('#main')">@Model.Book.Title</span>
                 @*<br />
-                        <input :style="`width: 100%; margin-top: 40px;`" type="range" min="30" max="390" value="" v-model="yRotation" />
-                        <input :style="`width: 100%; margin-top: 10px;`" type="range" min="-30" max="30" value="" v-model="xRotation" />
-                        <input :style="`width: 100%; margin-top: 10px;`" type="range" min="0" max="360" value="" v-model="zRotation" />*@
-                    </div>
+                    <input :style="`width: 100%; margin-top: 40px;`" type="range" min="30" max="390" value="" v-model="yRotation" />
+                    <input :style="`width: 100%; margin-top: 10px;`" type="range" min="-30" max="30" value="" v-model="xRotation" />
+                    <input :style="`width: 100%; margin-top: 10px;`" type="range" min="0" max="360" value="" v-model="zRotation" />*@
+            </div>
             <div id="section-nav">
                 @foreach (var sec in Model.Book.Sections.Where(s => s.NavId != "main"))
                 {
@@ -58,11 +111,14 @@
                     <span v-on:click="scrollTo('#@sec.NavId.Replace(" ", "")')">@sec.Name</span>
                     if (Model.Book.BlurbOrder == sec.Order + 1)
                     {
-
+                        <span v-on:click="scrollTo('#blurbs')">Blurbs</span>
+                    }
+                    if (Model.Book.BuyOrder == sec.Order + 1 || (sec == Model.Book.Sections.OrderBy(s => s.Order).Last() && Model.Book.BuyOrder == 0))
+                    {
+                        <span v-on:click="scrollTo('#buy')">Buy Now</span>
                     }
                 }
-
-                <span v-on:click="scrollTo('#more')">More</span>
+                <span v-on:click="scrollTo('#alsoby')">Also By</span>
             </div>
         </nav>
         <div id="floatingBook" :style="`height: ${heightInPixels}
@@ -79,7 +135,7 @@
                 </div>
             </div>
         </div>
-        @foreach(var sec in Model.Book.Sections.OrderBy(s => s.Order))
+        @foreach (var sec in Model.Book.Sections.OrderBy(s => s.Order))
         {
             <section id="@sec.NavId.Replace(" ", "")" style="background-color: @sec.BackgroundColor; text-align: left; background-image: url(/api/books/sectionbackground/@sec.Id); background-size: cover; color: @sec.Color; text-shadow: -.1vmax .1vmax .2vmax @sec.BackgroundColor;">
                 <div class="content">@Html.Raw(sec.Content)</div>
@@ -98,40 +154,50 @@
                     </div>
                 </section>
             }
+            if (Model.Book.BuyOrder == sec.Order + 1 || (sec == Model.Book.Sections.OrderBy(s => s.Order).Last() && Model.Book.BuyOrder == 0))
+            {
+                // display Blurb Section here
+                <section id="buy" style="_background-color: @sec.BackgroundColor; text-align: left; _background-image: url(/api/books/sectionbackground/@sec.Id); _background-size: cover; _color: @sec.Color; _text-shadow: -.1vmax .1vmax .2vmax @sec.BackgroundColor;">
+                    <div class="content">
+                        <h2>Buy Now</h2>
+                        @foreach (var listing in listings)
+                        {
+                            <a href="@listing.Url" style="background-image: url(/images/@listing.Vendor.ImageFile);">@listing.Vendor.Name - @listing.Format.Type</a>
+                        }
+                    </div>
+                </section>
+            }
         }
-        @*<section id="main" style="background-color: darkgray; text-align: right">
-            <div class="content">
-                <h2>Raney and Daye</h2><p><strong>Near Death</strong>&nbsp;introduces us to parapsychologist and anthropology professor Dr. Jennifer Daye and police detective Nate Raney in a story of murder, ghosts, a near-death experience.<br data-mce-bogus="1"></p><p>When Nate is shot during a high-stakes robbery, he awakes from the ordeal during which he was clinically dead with the information he needs to track down the men who shot him. However, he remains skeptical that there was anything supernatural about his experience.</p><p>Jennifer thinks otherwise and tries to convince Nate to share his experience. They team up to investigate a case involving a woman with an uninvited apparition in her apartment that leads them to uncover and solve a decades-old mystery.</p><p><strong>Near Death</strong> is a fast-paced story that takes you on an exciting journey through the paranormal.</p>
-            </div>
-        </section>*@
-        @*<section id="blurbs" style="background-color: lightcoral; text-align: right">
-            <div class="content">
-                <h3>BACON</h3>
-                <p>Bacon ipsum dolor amet sausage kielbasa beef pork belly spare ribs chislic pig bacon turkey. Prosciutto ham hock tri-tip, drumstick picanha t-bone turkey chuck ground round chicken corned beef andouille short loin alcatra. Spare ribs meatball beef ribs, chuck pancetta kielbasa venison landjaeger cupim biltong kevin turkey ham tail chislic. Pastrami t-bone drumstick shank, chislic tail landjaeger prosciutto.</p>
 
-                <p style="font-size: 1.25em">Shoulder shankle doner bacon t-bone. Brisket ball tip shoulder rump pancetta meatball tri-tip ribeye tenderloin flank biltong tail cupim. Cow frankfurter beef ribs sirloin kevin flank pig pastrami. Rump chicken shankle fatback ham frankfurter corned beef meatball drumstick pork chop alcatra tongue kielbasa porchetta.</p>
-            </div>
-        </section>*@
-        <section id="more" style="background-color: darkgray; text-align: right">
+        // display Also Buy Section here
+        <section id="alsoby" style="background-color: #333; text-align: left; _background-image: url(/api/books/sectionbackground/sec.Id); _background-size: cover; color: white; _text-shadow: -.1vmax .1vmax .2vmax black;">
             <div class="content">
-                <h3>BACON</h3>
-                <p>Bacon ipsum dolor amet sausage kielbasa beef pork belly spare ribs chislic pig bacon turkey. Prosciutto ham hock tri-tip, drumstick picanha t-bone turkey chuck ground round chicken corned beef andouille short loin alcatra. Spare ribs meatball beef ribs, chuck pancetta kielbasa venison landjaeger cupim biltong kevin turkey ham tail chislic. Pastrami t-bone drumstick shank, chislic tail landjaeger prosciutto.</p>
-
-                <p style="font-size: 1.25em">Shoulder shankle doner bacon t-bone. Brisket ball tip shoulder rump pancetta meatball tri-tip ribeye tenderloin flank biltong tail cupim. Cow frankfurter beef ribs sirloin kevin flank pig pastrami. Rump chicken shankle fatback ham frankfurter corned beef meatball drumstick pork chop alcatra tongue kielbasa porchetta.</p>
+                <h2>Also By</h2>
+                @foreach (var author in Model.Book.Authors)
+                {
+                    <h3>@author.Author.PenName</h3>
+                    @foreach (var book in author.Author.Books)
+                    {
+                        if (book.Book.Id != Model.Book.Id)
+                        {
+                        <h4>@book.Book.Title</h4>
+                            }
+                        }
+                    }
             </div>
         </section>
-        <section style="background-color: lightcoral; text-align: right">
-            <div class="content">
-                <h3>BACON</h3>
-                <p>Bacon ipsum dolor amet sausage kielbasa beef pork belly spare ribs chislic pig bacon turkey. Prosciutto ham hock tri-tip, drumstick picanha t-bone turkey chuck ground round chicken corned beef andouille short loin alcatra. Spare ribs meatball beef ribs, chuck pancetta kielbasa venison landjaeger cupim biltong kevin turkey ham tail chislic. Pastrami t-bone drumstick shank, chislic tail landjaeger prosciutto.</p>
 
-                <p style="font-size: 1.25em">Shoulder shankle doner bacon t-bone. Brisket ball tip shoulder rump pancetta meatball tri-tip ribeye tenderloin flank biltong tail cupim. Cow frankfurter beef ribs sirloin kevin flank pig pastrami. Rump chicken shankle fatback ham frankfurter corned beef meatball drumstick pork chop alcatra tongue kielbasa porchetta.</p>
-            </div>
-        </section>
-        
+        <aside id="buyLinks" :class="{ showing: showingBuyNow }">
+            @foreach (BookSite.Models.Listing listing in listings)
+            {
+                <button v-on:click="scrollTo('#buy')" style="background-image: url(/images/@listing.Vendor.ImageFile);">@listing.Vendor.Name - @listing.Format.Type</button>
+
+            }
+        </aside>
+
     </div>
 
-    
+
     <script src="~/lib/vue/vue.js"></script>
     <script>
 
@@ -153,7 +219,8 @@
                 viewPortHeight: 0,
                 bookLeftMargin: 0,
                 bookTopMargin: 0,
-                displayMode: "desktop"
+                displayMode: "desktop",
+                showingBuyNow: false
             },
             created() {
                 console.log("Add Scroll Event")
@@ -205,7 +272,7 @@
                         this.bookLeftMargin = ((window.innerWidth / 2) - widthInPixels) / 2;
                         this.bookTopMargin = (window.innerHeight - this.heightInPixels) / 2;
                         this.displayMode = "desktop";
-                        
+
                     } else {
                         // phone mode
                         this.heightInPixels = (this.viewPortHeight / 2) * .8;
@@ -218,11 +285,11 @@
                     console.log("VIEWPORT", window.innerWidth, window.innerHeight)
                     console.log("BOOK", widthInPixels, this.heightInPixels)
 
-                    // Check size of 
+                    // Check size of
                     let sections = document.querySelectorAll("section");
                     console.log(sections)
                     for (let i = 0; i < sections.length; i++) {
-                        let content = sections[i].querySelector(".content"); 
+                        let content = sections[i].querySelector(".content");
                         if (content) {
                             let currentRemSize = 1;
                             content.style["font-size"] = currentRemSize + "rem";
@@ -253,6 +320,16 @@
                 scrolled() {
                     let yRotation = 30;
                     console.log("SCROLLING", window.scrollY, this.viewPortHeight);
+
+                    const element = document.querySelector("#buy .content");
+                    const rect = element.getBoundingClientRect();
+                    if ((rect.top >= 0) && (rect.bottom <= (window.innerHeight || document.documentElement.clientHeight))) {
+                        this.showingBuyNow = true;
+                    } else {
+                        this.showingBuyNow = false;
+                    };
+                    console.log("RECT", rect.top, rect.bottom, 0, (window.innerHeight || document.documentElement.clientHeight), this.showingBuyNow)
+
                     this.scrollY = window.scrollY;
                     if (window.scrollY <= this.viewPortHeight) {
                         yRotation = 30 + (window.scrollY * 120 / this.viewPortHeight);
@@ -266,13 +343,13 @@
                     if (window.scrollY > this.viewPortHeight * 2) {
                         yRotation = 330;
                     }
-                    
-                    
+
+
 
                 },
                 sizes(cover, heightInPixels) {
                     let height = heightInPixels;
-                    let width = (cover.width * ((100 - cover.spineWidth) / 200)) * (heightInPixels / cover.height); // 
+                    let width = (cover.width * ((100 - cover.spineWidth) / 200)) * (heightInPixels / cover.height); //
                     let spine = (cover.width * cover.spineWidth / 100) * (heightInPixels / cover.height);
                     return {
                         height,

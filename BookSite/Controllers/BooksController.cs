@@ -92,6 +92,7 @@ namespace BookSite.Controllers
                 .Include(b => b.Editions)
                 .ThenInclude(e => e.Formats)
                 .ThenInclude(f => f.Listings)
+                .ThenInclude(l => l.Vendor)
                 .Include(b => b.Authors).ThenInclude(a => a.Author)
                 .FirstOrDefaultAsync(b => b.Id == id);
 
@@ -245,6 +246,40 @@ namespace BookSite.Controllers
 
                 await _context.SaveChangesAsync();
                 return Ok(edition);
+            }
+            return NotFound();
+        }
+
+        [HttpPost("format/{editionId}")]
+        public async Task<IActionResult> AddUpdateFormat(int editionId, Format format)
+        {
+            if (format != null)
+            {
+                if (format.Id == 0)
+                {
+                    var edition = await _context.Editions.Include(e => e.Formats).FirstOrDefaultAsync(e => e.Id == editionId);
+                    edition?.Formats.Add(format);
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(format);
+            }
+            return NotFound();
+        }
+
+        [HttpPost("listing/{formatId}")]
+        public async Task<IActionResult> AddUpdateListing(int formatId, Listing listing)
+        {
+            if (listing != null)
+            {
+                if (listing.Id == 0)
+                {
+                    var format = await _context.Formats.Include(f => f.Listings).FirstOrDefaultAsync(f => f.Id == formatId);
+                    format?.Listings.Add(listing);
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(listing);
             }
             return NotFound();
         }

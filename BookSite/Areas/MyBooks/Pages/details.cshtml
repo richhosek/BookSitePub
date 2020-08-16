@@ -32,6 +32,7 @@
 </style>
 <div id="book-add-app">
     <h2 class="display-4 text-sm-right">Book Details</h2>
+    <!--Book Information Heading-->
     <div class="row" v-if="book.id">
         <div class="col-sm-3 text-center">
             <img :src="`/api/books/coverart/${book.id}?t=${refresh}`" style="height: 200px;" alt="" />
@@ -46,7 +47,7 @@
     <div class="row" v-if="!book">
         <div class="col-12"><h3>This book doesn't appear to be one you manage</h3></div>
     </div>
-
+    <!--Tabs-->
     <ul class="nav nav-tabs nav-justified">
         <li class="nav-item">
             <span class=" w-100 nav-link" v-on:click="setActive('info')" :class="{ active: isActive('info') }">Information</span>
@@ -61,7 +62,7 @@
             <span class="w-100 nav-link" v-on:click="setActive('blurbs')" :class="{ active: isActive('blurbs') }">Blurbs</span>
         </li>
         <li class="nav-item">
-            <span class="w-100 nav-link" v-on:click="setActive('editions')" :class="{ active: isActive('editions') }">Editions</span>
+            <span class="w-100 nav-link" v-on:click="setActive('listings')" :class="{ active: isActive('listings') }">Listings</span>
         </li>
     </ul>
 
@@ -247,7 +248,7 @@
                 <div class="blurbSource">–{{blurb.source}}</div>
             </div>
         </div>
-        <div class="tab-pane fade" :class="{ 'active show': isActive('editions') }" id="editions">
+        <div class="tab-pane fade" :class="{ 'active show': isActive('listings') }" id="listings">
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
@@ -264,26 +265,43 @@
             </div>
             <button v-on:click.prevent="addUpdateEdition" class="btn btn-outline-primary">Add Edition</button> <button v-on:click.prevent="clearBlurb" class="btn btn-outline-danger">Reset</button>
             <hr />
-            <div v-for="edition in book.editions" class="form-row">
-                <div class="col">{{ordinal(edition.number)}} Edition published on {{(new Date(edition.publishedOn)).toLocaleDateString()}}</div>
-                <div class="col">
-                    <select class="form-control">
-                        <option>eBook</option>
-                        <option>Paperback</option>
-                        <option>Hardcover</option>
-                        <option>AudioBook</option>
-                    </select>
+            <div v-for="edition in book.editions">
+                <div class="form-row">
+                    <div class="col"><h5>{{ordinal(edition.number)}} Edition published on {{(new Date(edition.publishedOn)).toLocaleDateString()}}</h5></div>
+                    <div class="col">
+                        <select class="form-control" v-model="format">
+                            <option>eBook</option>
+                            <option>Paperback</option>
+                            <option>Hardcover</option>
+                            <option>AudioBook</option>
+                        </select>
+                    </div>
+                    @*<div class="col">
+           
+        </div>
+        <div class="col"><input class="form-control" type="text" value="" placeholder="url to purchase book" /></div>*@
+                    <div class="col"><button class="btn btn-outline-primary" v-on:click.prevent="addUpdateFormat(edition.id)">Add Format</button></div>
                 </div>
-                @*<div class="col">
-                    <select class="form-control">
-                        <option>Amazon Kindle</option>
-                        <option>Amazon</option>
-                        <option>Apple Books</option>
-                        <option>Audible</option>
-                    </select>
+
+                <div class="form-row" v-for="format in edition.formats">
+                    <div class="col-3">{{format.type}}</div>
+                    <div class="col-9 d-flex">
+                        <div class="form-row w-100">
+                            <div class="col-3">
+                                <select class="form-control" v-model="listingVendor">
+                                    <option v-for="vendor in vendors" :value="vendor.id">{{vendor.name}}</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="url" class="form-control" v-model="listingUrl" value="" />
+                            </div>
+                            <div class="col-3"><button class="btn btn-outline-primary" v-on:click.prevent="addUpdateListing(edition.id, format.id)">Add Listing</button></div>
+                            <div class="col-12" v-for="listing in format.listings">
+                                {{listing.vendor.name}}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col"><input class="form-control" type="text" value="" placeholder="url to purchase book" /></div>*@
-                <div class="col"><button class="btn btn-outline-primary">Add Format</button></div>
             </div>
         </div>
     </div>
@@ -323,7 +341,7 @@
                 cover: { type: 2 },
                 refresh: 0,
                 thumbHeight: 180,
-                activeSection: "editions",
+                activeSection: "listings",
                 title: "",
                 overrideGeneratedUrl: "",
                 titleUrl: "",
@@ -342,7 +360,11 @@
                 blurbSource: "",
                 blurbDisplayOrder: "",
                 editionNumber: "",
-                editionDate: ""
+                editionDate: "",
+                format: "eBook",
+                listingVendor: "",
+                listingUrl: "",
+                vendors: []
             },
             computed: {
                 computedTitleUrl() {
@@ -435,6 +457,34 @@
                 backgroundImageFileSelect() {
                     this.backgroundImageFile = this.$refs.backgroundImage.files[0];
                 },
+                addUpdateListing(editionId, formatId) {
+                    let self = this;
+                    let listing = {
+                        vendorId: this.listingVendor,
+                        url: this.listingUrl
+                    };
+                    bookManager.addUpdateListing(formatId, listing)
+                        .then(function ({ data }) {
+                            console.log("LISTING ADDED", listing);
+                            self.book.editions.find(e => e.id == editionId).formats.find(f => f.id == formatId).listings.add(data)
+                        })
+                },
+                addUpdateFormat(editionId) {
+                    console.log("EDITION ID", editionId);
+                    let self = this;
+                    let format = {
+                        Type: this.format
+                    };
+                    bookManager.addUpdateFormat(editionId, format)
+                        .then(function ({ data }) {
+                            console.log("FORMAT ADDED", data);
+                            //todo: code for update
+                            self.book.editions.find(e => e.id == editionId).formats.add(data)
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                        });
+                },
                 addUpdateEdition() {
                     let self = this;
                     let edition = {
@@ -443,7 +493,7 @@
                     };
                     bookManager.addUpdateEdition(this.book.id, edition)
                         .then(function ({ data }) {
-                            console.log("EDITION ADDED");
+                            console.log("EDITION ADDED", data);
                             let existingEdition = self.book.editions.find(function (edition) { edition.id == data.id });
                             if (existingEdition) {
                                 existingEdition.number = data.number;
@@ -682,6 +732,10 @@
                     .catch(function (error) {
                         console.error(error);
                     });
+                axios.get('/api/vendors')
+                    .then(function ({ data }) {
+                        self.vendors = data;
+                    })
             }
         });
     </script>

@@ -38,7 +38,14 @@ namespace BookSite
                 .Include(b => b.Covers)
                 .Include(b => b.Sections)
                 .Include(b => b.Blurbs)
-                .Include(b => b.Authors).ThenInclude(a => a.Author)
+                .Include(b => b.Authors)
+                .ThenInclude(a => a.Author)
+                .ThenInclude(a => a.Books)
+                .ThenInclude(b => b.Book)
+                .Include(b => b.Editions)
+                .ThenInclude(e => e.Formats)
+                .ThenInclude(f => f.Listings)
+                .ThenInclude(l => l.Vendor)
                 .FirstOrDefaultAsync(b => b.TitleUrl == titleUrl && b.Authors.Any(a => a.AuthorId == Author.Id));
 
             if (Book == null)
